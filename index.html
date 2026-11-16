@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon entraîneur de verbes – Französisch Klasse 10</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--text:#17202a;--muted:#667085;--line:#d9dee7;--accent:#315fba;--good:#16834a;--bad:#b54735}
+@media(prefers-color-scheme:dark){:root{--bg:#11151b;--card:#1b222c;--text:#edf1f7;--muted:#aab4c2;--line:#394453;--accent:#83a9f4;--good:#54d18a;--bad:#ff927f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}
+h1{font-size:1.45rem;margin:0}h2{font-size:1.15rem;margin:0 0 12px}.sub,.muted{color:var(--muted);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0 18px}
+label.choice{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:10px 14px;border-radius:10px;font:inherit;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:white;font-weight:650}
+button:disabled{opacity:.45;cursor:not-allowed}
+.full{width:100%}.hidden{display:none!important}
+.question{font-size:1.55rem;font-weight:700;margin:4px 0 12px}.tense{font-weight:650;color:var(--accent)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.person{font-size:1.2rem;font-weight:650;min-width:55px}
+input[type=text]{width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.answerwrap{flex:1;min-width:190px}.feedback{margin-top:12px}.good{color:var(--good);font-weight:750}.bad{color:var(--bad);font-weight:700}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{border:1px solid var(--line);border-radius:12px;padding:12px}.stat b{font-size:1.5rem;display:block}
+.small{font-size:.83rem}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.accents{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.accents button{padding:6px 11px;min-width:40px}
+footer{margin-top:22px;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><div><div class="sub">Französisch · Klasse 10 · A2–B1</div><h1>Mon entraîneur de verbes</h1></div><div class="sub" id="state">Start</div></div>
+ <section class="card" id="setup">
+  <h2>Welche Zeitformen möchtest du üben?</h2>
+  <div class="choices" id="choices">
+   <label class="choice"><input type="checkbox" value="Présent" checked> Présent</label>
+   <label class="choice"><input type="checkbox" value="Futur simple" checked> Futur simple</label>
+   <label class="choice"><input type="checkbox" value="Imparfait" checked> Imparfait</label>
+   <label class="choice"><input type="checkbox" value="Conditionnel présent" checked> Conditionnel présent</label>
+  </div>
+  <p class="muted">Wähle eine oder mehrere Zeitformen. In jeder Aufgabe wird ein Verb und eine Person vorgegeben.</p>
+  <button class="primary full" id="start">Training starten</button>
+  <p class="small muted" id="setupError" aria-live="polite"></p>
+ </section>
+ <section class="card hidden" id="game">
+  <div class="row" style="justify-content:space-between"><span class="muted" id="number">Aufgabe 1</span><span class="muted" id="score">0 richtig</span></div>
+  <hr>
+  <div class="tense" id="tense"></div>
+  <div class="question" id="verb"></div>
+  <div class="row">
+   <div class="person" id="person"></div>
+   <div class="answerwrap"><input id="entry" type="text" placeholder="Verbform eingeben" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+  </div>
+  <div class="accents" id="accents"><button type="button">é</button><button type="button">è</button><button type="button">ê</button><button type="button">à</button><button type="button">ç</button><button type="button">î</button><button type="button">ô</button><button type="button">û</button></div>
+  <p class="small muted">Gib nur die Verbform ein, ohne Personalpronomen. Akzente zählen! <span id="reflNote" class="hidden"><br><strong>Reflexives Verb:</strong> Schreibe das Reflexivpronomen mit (z. B. bei <em>se lever</em>: tu → <em>te lèves</em>).</span></p>
+  <button class="primary full" id="check">Antwort überprüfen</button>
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+  <button class="primary full hidden" id="next">Nächste Aufgabe</button>
+  <div class="actions"><button id="finish">Training beenden / Bilan</button></div>
+ </section>
+ <section class="card hidden" id="result">
+  <h2>Bilan – Deine Auswertung</h2>
+  <div class="stats">
+   <div class="stat"><span class="muted small">Abgeschlossene Aufgaben</span><b id="total">0</b></div>
+   <div class="stat"><span class="muted small">Im ersten Versuch richtig</span><b id="first">0</b></div>
+   <div class="stat"><span class="muted small">Im zweiten Versuch richtig</span><b id="second">0</b></div>
+   <div class="stat"><span class="muted small">Nach zwei Versuchen falsch</span><b id="wrong">0</b></div>
+  </div>
+  <hr><h2>Ergebnisse nach Zeitform</h2><div id="byTense"></div>
+  <hr><h2>Diese Formen solltest du wiederholen</h2><div id="review" class="muted">–</div>
+  <div class="actions"><button class="primary" id="again">Neue Runde</button><button id="back">Zeitformen ändern</button></div>
+ </section>
+</main>
+<script>
+"use strict";
+/*
+  Feste Konjugationsdaten: JEDE Form ist hier ausgeschrieben.
+  Das Programm erzeugt keine Formen nach Regeln.
+  Pro Feld: eine Form als Text, mehrere gleichwertig richtige Formen als Liste,
+  z. B. ['paie','paye']. null = wird nicht abgefragt (z. B. falloir mit je).
+  Neue Verben werden einfach als neuer Block ergänzt.
+*/
+const P=['je','tu','il','nous','vous','ils'];
+const FUT=['ai','as','a','ons','ez','ont'];
+const IMP=['ais','ais','ait','ions','iez','aient'];
+const TENSES=['Présent','Imparfait','Futur simple','Conditionnel présent'];
+const DATA={
+ 'être':{
+  'Présent':['suis','es','est','sommes','êtes','sont'],
+  'Imparfait':['étais','étais','était','étions','étiez','étaient'],
+  'Futur simple':['serai','seras','sera','serons','serez','seront'],
+  'Conditionnel présent':['serais','serais','serait','serions','seriez','seraient'],
+ },
+ 'avoir':{
+  'Présent':['ai','as','a','avons','avez','ont'],
+  'Imparfait':['avais','avais','avait','avions','aviez','avaient'],
+  'Futur simple':['aurai','auras','aura','aurons','aurez','auront'],
+  'Conditionnel présent':['aurais','aurais','aurait','aurions','auriez','auraient'],
+ },
+ 'aller':{
+  'Présent':['vais','vas','va','allons','allez','vont'],
+  'Imparfait':['allais','allais','allait','allions','alliez','allaient'],
+  'Futur simple':['irai','iras','ira','irons','irez','iront'],
+  'Conditionnel présent':['irais','irais','irait','irions','iriez','iraient'],
+ },
+ 'faire':{
+  'Présent':['fais','fais','fait','faisons','faites','font'],
+  'Imparfait':['faisais','faisais','faisait','faisions','faisiez','faisaient'],
+  'Futur simple':['ferai','feras','fera','ferons','ferez','feront'],
+  'Conditionnel présent':['ferais','ferais','ferait','ferions','feriez','feraient'],
+ },
+ 'pouvoir':{
+  'Présent':['peux','peux','peut','pouvons','pouvez','peuvent'],
+  'Imparfait':['pouvais','pouvais','pouvait','pouvions','pouviez','pouvaient'],
+  'Futur simple':['pourrai','pourras','pourra','pourrons','pourrez','pourront'],
+  'Conditionnel présent':['pourrais','pourrais','pourrait','pourrions','pourriez','pourraient'],
+ },
+ 'vouloir':{
+  'Présent':['veux','veux','veut','voulons','voulez','veulent'],
+  'Imparfait':['voulais','voulais','voulait','voulions','vouliez','voulaient'],
+  'Futur simple':['voudrai','voudras','voudra','voudrons','voudrez','voudront'],
+  'Conditionnel présent':['voudrais','voudrais','voudrait','voudrions','voudriez','voudraient'],
+ },
+ 'devoir':{
+  'Présent':['dois','dois','doit','devons','devez','doivent'],
+  'Imparfait':['devais','devais','devait','devions','deviez','devaient'],
+  'Futur simple':['devrai','devras','devra','devrons','devrez','devront'],
+  'Conditionnel présent':['devrais','devrais','devrait','devrions','devriez','devraient'],
+ },
+ 'savoir':{
+  'Présent':['sais','sais','sait','savons','savez','savent'],
+  'Imparfait':['savais','savais','savait','savions','saviez','savaient'],
+  'Futur simple':['saurai','sauras','saura','saurons','saurez','sauront'],
+  'Conditionnel présent':['saurais','saurais','saurait','saurions','sauriez','sauraient'],
+ },
+ 'venir':{
+  'Présent':['viens','viens','vient','venons','venez','viennent'],
+  'Imparfait':['venais','venais','venait','venions','veniez','venaient'],
+  'Futur simple':['viendrai','viendras','viendra','viendrons','viendrez','viendront'],
+  'Conditionnel présent':['viendrais','viendrais','viendrait','viendrions','viendriez','viendraient'],
+ },
+ 'voir':{
+  'Présent':['vois','vois','voit','voyons','voyez','voient'],
+  'Imparfait':['voyais','voyais','voyait','voyions','voyiez','voyaient'],
+  'Futur simple':['verrai','verras','verra','verrons','verrez','verront'],
+  'Conditionnel présent':['verrais','verrais','verrait','verrions','verriez','verraient'],
+ },
+ 'envoyer':{
+  'Présent':['envoie','envoies','envoie','envoyons','envoyez','envoient'],
+  'Imparfait':['envoyais','envoyais','envoyait','envoyions','envoyiez','envoyaient'],
+  'Futur simple':['enverrai','enverras','enverra','enverrons','enverrez','enverront'],
+  'Conditionnel présent':['enverrais','enverrais','enverrait','enverrions','enverriez','enverraient'],
+ },
+ 'recevoir':{
+  'Présent':['reçois','reçois','reçoit','recevons','recevez','reçoivent'],
+  'Imparfait':['recevais','recevais','recevait','recevions','receviez','recevaient'],
+  'Futur simple':['recevrai','recevras','recevra','recevrons','recevrez','recevront'],
+  'Conditionnel présent':['recevrais','recevrais','recevrait','recevrions','recevriez','recevraient'],
+ },
+ 'décevoir':{
+  'Présent':['déçois','déçois','déçoit','décevons','décevez','déçoivent'],
+  'Imparfait':['décevais','décevais','décevait','décevions','déceviez','décevaient'],
+  'Futur simple':['décevrai','décevras','décevra','décevrons','décevrez','décevront'],
+  'Conditionnel présent':['décevrais','décevrais','décevrait','décevrions','décevriez','décevraient'],
+ },
+ 'courir':{
+  'Présent':['cours','cours','court','courons','courez','courent'],
+  'Imparfait':['courais','courais','courait','courions','couriez','couraient'],
+  'Futur simple':['courrai','courras','courra','courrons','courrez','courront'],
+  'Conditionnel présent':['courrais','courrais','courrait','courrions','courriez','courraient'],
+ },
+ 'mourir':{
+  'Présent':['meurs','meurs','meurt','mourons','mourez','meurent'],
+  'Imparfait':['mourais','mourais','mourait','mourions','mouriez','mouraient'],
+  'Futur simple':['mourrai','mourras','mourra','mourrons','mourrez','mourront'],
+  'Conditionnel présent':['mourrais','mourrais','mourrait','mourrions','mourriez','mourraient'],
+ },
+ 'tenir':{
+  'Présent':['tiens','tiens','tient','tenons','tenez','tiennent'],
+  'Imparfait':['tenais','tenais','tenait','tenions','teniez','tenaient'],
+  'Futur simple':['tiendrai','tiendras','tiendra','tiendrons','tiendrez','tiendront'],
+  'Conditionnel présent':['tiendrais','tiendrais','tiendrait','tiendrions','tiendriez','tiendraient'],
+ },
+ 'prendre':{
+  'Présent':['prends','prends','prend','prenons','prenez','prennent'],
+  'Imparfait':['prenais','prenais','prenait','prenions','preniez','prenaient'],
+  'Futur simple':['prendrai','prendras','prendra','prendrons','prendrez','prendront'],
+  'Conditionnel présent':['prendrais','prendrais','prendrait','prendrions','prendriez','prendraient'],
+ },
+ 'partir':{
+  'Présent':['pars','pars','part','partons','partez','partent'],
+  'Imparfait':['partais','partais','partait','partions','partiez','partaient'],
+  'Futur simple':['partirai','partiras','partira','partirons','partirez','partiront'],
+  'Conditionnel présent':['partirais','partirais','partirait','partirions','partiriez','partiraient'],
+ },
+ 'sortir':{
+  'Présent':['sors','sors','sort','sortons','sortez','sortent'],
+  'Imparfait':['sortais','sortais','sortait','sortions','sortiez','sortaient'],
+  'Futur simple':['sortirai','sortiras','sortira','sortirons','sortirez','sortiront'],
+  'Conditionnel présent':['sortirais','sortirais','sortirait','sortirions','sortiriez','sortiraient'],
+ },
+ 'dormir':{
+  'Présent':['dors','dors','dort','dormons','dormez','dorment'],
+  'Imparfait':['dormais','dormais','dormait','dormions','dormiez','dormaient'],
+  'Futur simple':['dormirai','dormiras','dormira','dormirons','dormirez','dormiront'],
+  'Conditionnel présent':['dormirais','dormirais','dormirait','dormirions','dormiriez','dormiraient'],
+ },
+ "acheter":{
+  'Présent':["achète","achètes","achète","achetons","achetez","achètent"],
+  'Imparfait':["achetais","achetais","achetait","achetions","achetiez","achetaient"],
+  'Futur simple':["achèterai","achèteras","achètera","achèterons","achèterez","achèteront"],
+  'Conditionnel présent':["achèterais","achèterais","achèterait","achèterions","achèteriez","achèteraient"],
+ },
+ "répéter":{
+  'Présent':["répète","répètes","répète","répétons","répétez","répètent"],
+  'Imparfait':["répétais","répétais","répétait","répétions","répétiez","répétaient"],
+  'Futur simple':["répèterai","répèteras","répètera","répèterons","répèterez","répèteront"],
+  'Conditionnel présent':["répèterais","répèterais","répèterait","répèterions","répèteriez","répèteraient"],
+ },
+ "préférer":{
+  'Présent':["préfère","préfères","préfère","préférons","préférez","préfèrent"],
+  'Imparfait':["préférais","préférais","préférait","préférions","préfériez","préféraient"],
+  'Futur simple':["préférerai","préféreras","préférera","préférerons","préférerez","préféreront"],
+  'Conditionnel présent':["préférerais","préférerais","préférerait","préférerions","préféreriez","préféreraient"],
+ },
+ "espérer":{
+  'Présent':["espère","espères","espère","espérons","espérez","espèrent"],
+  'Imparfait':["espérais","espérais","espérait","espérions","espériez","espéraient"],
+  'Futur simple':["espèrerai","espèreras","espèrera","espèrerons","espèrerez","espèreront"],
+  'Conditionnel présent':["espèrerais","espèrerais","espèrerait","espèrerions","espèreriez","espèreraient"],
+ },
+ "appeler":{
+  'Présent':["appelle","appelles","appelle","appelons","appelez","appellent"],
+  'Imparfait':["appelais","appelais","appelait","appelions","appeliez","appelaient"],
+  'Futur simple':["appellerai","appelleras","appellera","appellerons","appellerez","appelleront"],
+  'Conditionnel présent':["appellerais","appellerais","appellerait","appellerions","appelleriez","appelleraient"],
+ },
+ "essayer":{
+  'Présent':["essaie","essaies","essaie","essayons","essayez","essaient"],
+  'Imparfait':["essayais","essayais","essayait","essayions","essayiez","essayaient"],
+  'Futur simple':["essaierai","essaieras","essaiera","essaierons","essaierez","essaieront"],
+  'Conditionnel présent':["essaierais","essaierais","essaierait","essaierions","essaieriez","essaieraient"],
+ },
+ "payer":{
+  'Présent':["paie","paies","paie","payons","payez","paient"],
+  'Imparfait':["payais","payais","payait","payions","payiez","payaient"],
+  'Futur simple':["paierai","paieras","paiera","paierons","paierez","paieront"],
+  'Conditionnel présent':["paierais","paierais","paierait","paierions","paieriez","paieraient"],
+ },
+ "s'ennuyer":{
+  'Présent':["m'ennuie","t'ennuies","s'ennuie","nous ennuyons","vous ennuyez","s'ennuient"],
+  'Imparfait':["m'ennuyais","t'ennuyais","s'ennuyait","nous ennuyions","vous ennuyiez","s'ennuyaient"],
+  'Futur simple':["m'ennuierai","t'ennuieras","s'ennuiera","nous ennuierons","vous ennuierez","s'ennuieront"],
+  'Conditionnel présent':["m'ennuierais","t'ennuierais","s'ennuierait","nous ennuierions","vous ennuieriez","s'ennuieraient"],
+ },
+ "commencer":{
+  'Présent':["commence","commences","commence","commençons","commencez","commencent"],
+  'Imparfait':["commençais","commençais","commençait","commencions","commenciez","commençaient"],
+  'Futur simple':["commencerai","commenceras","commencera","commencerons","commencerez","commenceront"],
+  'Conditionnel présent':["commencerais","commencerais","commencerait","commencerions","commenceriez","commenceraient"],
+ },
+ "connaître":{
+  'Présent':["connais","connais","connaît","connaissons","connaissez","connaissent"],
+  'Imparfait':["connaissais","connaissais","connaissait","connaissions","connaissiez","connaissaient"],
+  'Futur simple':["connaîtrai","connaîtras","connaîtra","connaîtrons","connaîtrez","connaîtront"],
+  'Conditionnel présent':["connaîtrais","connaîtrais","connaîtrait","connaîtrions","connaîtriez","connaîtraient"],
+ },
+ "dire":{
+  'Présent':["dis","dis","dit","disons","dites","disent"],
+  'Imparfait':["disais","disais","disait","disions","disiez","disaient"],
+  'Futur simple':["dirai","diras","dira","dirons","direz","diront"],
+  'Conditionnel présent':["dirais","dirais","dirait","dirions","diriez","diraient"],
+ },
+ "écrire":{
+  'Présent':["écris","écris","écrit","écrivons","écrivez","écrivent"],
+  'Imparfait':["écrivais","écrivais","écrivait","écrivions","écriviez","écrivaient"],
+  'Futur simple':["écrirai","écriras","écrira","écrirons","écrirez","écriront"],
+  'Conditionnel présent':["écrirais","écrirais","écrirait","écririons","écririez","écriraient"],
+ },
+ "lire":{
+  'Présent':["lis","lis","lit","lisons","lisez","lisent"],
+  'Imparfait':["lisais","lisais","lisait","lisions","lisiez","lisaient"],
+  'Futur simple':["lirai","liras","lira","lirons","lirez","liront"],
+  'Conditionnel présent':["lirais","lirais","lirait","lirions","liriez","liraient"],
+ },
+ "manger":{
+  'Présent':["mange","manges","mange","mangeons","mangez","mangent"],
+  'Imparfait':["mangeais","mangeais","mangeait","mangions","mangiez","mangeaient"],
+  'Futur simple':["mangerai","mangeras","mangera","mangerons","mangerez","mangeront"],
+  'Conditionnel présent':["mangerais","mangerais","mangerait","mangerions","mangeriez","mangeraient"],
+ },
+ "mettre":{
+  'Présent':["mets","mets","met","mettons","mettez","mettent"],
+  'Imparfait':["mettais","mettais","mettait","mettions","mettiez","mettaient"],
+  'Futur simple':["mettrai","mettras","mettra","mettrons","mettrez","mettront"],
+  'Conditionnel présent':["mettrais","mettrais","mettrait","mettrions","mettriez","mettraient"],
+ },
+ "apprendre":{
+  'Présent':["apprends","apprends","apprend","apprenons","apprenez","apprennent"],
+  'Imparfait':["apprenais","apprenais","apprenait","apprenions","appreniez","apprenaient"],
+  'Futur simple':["apprendrai","apprendras","apprendra","apprendrons","apprendrez","apprendront"],
+  'Conditionnel présent':["apprendrais","apprendrais","apprendrait","apprendrions","apprendriez","apprendraient"],
+ },
+ "comprendre":{
+  'Présent':["comprends","comprends","comprend","comprenons","comprenez","comprennent"],
+  'Imparfait':["comprenais","comprenais","comprenait","comprenions","compreniez","comprenaient"],
+  'Futur simple':["comprendrai","comprendras","comprendra","comprendrons","comprendrez","comprendront"],
+  'Conditionnel présent':["comprendrais","comprendrais","comprendrait","comprendrions","comprendriez","comprendraient"],
+ },
+ "devenir":{
+  'Présent':["deviens","deviens","devient","devenons","devenez","deviennent"],
+  'Imparfait':["devenais","devenais","devenait","devenions","deveniez","devenaient"],
+  'Futur simple':["deviendrai","deviendras","deviendra","deviendrons","deviendrez","deviendront"],
+  'Conditionnel présent':["deviendrais","deviendrais","deviendrait","deviendrions","deviendriez","deviendraient"],
+ },
+ "voyager":{
+  'Présent':["voyage","voyages","voyage","voyageons","voyagez","voyagent"],
+  'Imparfait':["voyageais","voyageais","voyageait","voyagions","voyagiez","voyageaient"],
+  'Futur simple':["voyagerai","voyageras","voyagera","voyagerons","voyagerez","voyageront"],
+  'Conditionnel présent':["voyagerais","voyagerais","voyagerait","voyagerions","voyageriez","voyageraient"],
+ },
+ "arriver":{
+  'Présent':["arrive","arrives","arrive","arrivons","arrivez","arrivent"],
+  'Imparfait':["arrivais","arrivais","arrivait","arrivions","arriviez","arrivaient"],
+  'Futur simple':["arriverai","arriveras","arrivera","arriverons","arriverez","arriveront"],
+  'Conditionnel présent':["arriverais","arriverais","arriverait","arriverions","arriveriez","arriveraient"],
+ },
+ "gagner":{
+  'Présent':["gagne","gagnes","gagne","gagnons","gagnez","gagnent"],
+  'Imparfait':["gagnais","gagnais","gagnait","gagnions","gagniez","gagnaient"],
+  'Futur simple':["gagnerai","gagneras","gagnera","gagnerons","gagnerez","gagneront"],
+  'Conditionnel présent':["gagnerais","gagnerais","gagnerait","gagnerions","gagneriez","gagneraient"],
+ },
+ "passer":{
+  'Présent':["passe","passes","passe","passons","passez","passent"],
+  'Imparfait':["passais","passais","passait","passions","passiez","passaient"],
+  'Futur simple':["passerai","passeras","passera","passerons","passerez","passeront"],
+  'Conditionnel présent':["passerais","passerais","passerait","passerions","passeriez","passeraient"],
+ },
+ "trouver":{
+  'Présent':["trouve","trouves","trouve","trouvons","trouvez","trouvent"],
+  'Imparfait':["trouvais","trouvais","trouvait","trouvions","trouviez","trouvaient"],
+  'Futur simple':["trouverai","trouveras","trouvera","trouverons","trouverez","trouveront"],
+  'Conditionnel présent':["trouverais","trouverais","trouverait","trouverions","trouveriez","trouveraient"],
+ },
+ 'falloir':{
+  'Présent':[null,null,'faut',null,null,null],
+  'Imparfait':[null,null,'fallait',null,null,null],
+  'Futur simple':[null,null,'faudra',null,null,null],
+  'Conditionnel présent':[null,null,'faudrait',null,null,null],
+ },
+ 'pleuvoir':{
+  'Présent':[null,null,'pleut',null,null,null],
+  'Imparfait':[null,null,'pleuvait',null,null,null],
+  'Futur simple':[null,null,'pleuvra',null,null,null],
+  'Conditionnel présent':[null,null,'pleuvrait',null,null,null],
+ },
+ 'parler':{
+  'Présent':['parle','parles','parle','parlons','parlez','parlent'],
+  'Imparfait':['parlais','parlais','parlait','parlions','parliez','parlaient'],
+  'Futur simple':['parlerai','parleras','parlera','parlerons','parlerez','parleront'],
+  'Conditionnel présent':['parlerais','parlerais','parlerait','parlerions','parleriez','parleraient'],
+ },
+ 'aimer':{
+  'Présent':['aime','aimes','aime','aimons','aimez','aiment'],
+  'Imparfait':['aimais','aimais','aimait','aimions','aimiez','aimaient'],
+  'Futur simple':['aimerai','aimeras','aimera','aimerons','aimerez','aimeront'],
+  'Conditionnel présent':['aimerais','aimerais','aimerait','aimerions','aimeriez','aimeraient'],
+ },
+ 'jouer':{
+  'Présent':['joue','joues','joue','jouons','jouez','jouent'],
+  'Imparfait':['jouais','jouais','jouait','jouions','jouiez','jouaient'],
+  'Futur simple':['jouerai','joueras','jouera','jouerons','jouerez','joueront'],
+  'Conditionnel présent':['jouerais','jouerais','jouerait','jouerions','joueriez','joueraient'],
+ },
+ 'donner':{
+  'Présent':['donne','donnes','donne','donnons','donnez','donnent'],
+  'Imparfait':['donnais','donnais','donnait','donnions','donniez','donnaient'],
+  'Futur simple':['donnerai','donneras','donnera','donnerons','donnerez','donneront'],
+  'Conditionnel présent':['donnerais','donnerais','donnerait','donnerions','donneriez','donneraient'],
+ },
+ 'regarder':{
+  'Présent':['regarde','regardes','regarde','regardons','regardez','regardent'],
+  'Imparfait':['regardais','regardais','regardait','regardions','regardiez','regardaient'],
+  'Futur simple':['regarderai','regarderas','regardera','regarderons','regarderez','regarderont'],
+  'Conditionnel présent':['regarderais','regarderais','regarderait','regarderions','regarderiez','regarderaient'],
+ },
+ 'travailler':{
+  'Présent':['travaille','travailles','travaille','travaillons','travaillez','travaillent'],
+  'Imparfait':['travaillais','travaillais','travaillait','travaillions','travailliez','travaillaient'],
+  'Futur simple':['travaillerai','travailleras','travaillera','travaillerons','travaillerez','travailleront'],
+  'Conditionnel présent':['travaillerais','travaillerais','travaillerait','travaillerions','travailleriez','travailleraient'],
+ },
+ 'finir':{
+  'Présent':['finis','finis','finit','finissons','finissez','finissent'],
+  'Imparfait':['finissais','finissais','finissait','finissions','finissiez','finissaient'],
+  'Futur simple':['finirai','finiras','finira','finirons','finirez','finiront'],
+  'Conditionnel présent':['finirais','finirais','finirait','finirions','finiriez','finiraient'],
+ },
+ 'choisir':{
+  'Présent':['choisis','choisis','choisit','choisissons','choisissez','choisissent'],
+  'Imparfait':['choisissais','choisissais','choisissait','choisissions','choisissiez','choisissaient'],
+  'Futur simple':['choisirai','choisiras','choisira','choisirons','choisirez','choisiront'],
+  'Conditionnel présent':['choisirais','choisirais','choisirait','choisirions','choisiriez','choisiraient'],
+ },
+ 'réussir':{
+  'Présent':['réussis','réussis','réussit','réussissons','réussissez','réussissent'],
+  'Imparfait':['réussissais','réussissais','réussissait','réussissions','réussissiez','réussissaient'],
+  'Futur simple':['réussirai','réussiras','réussira','réussirons','réussirez','réussiront'],
+  'Conditionnel présent':['réussirais','réussirais','réussirait','réussirions','réussiriez','réussiraient'],
+ },
+ 'attendre':{
+  'Présent':['attends','attends','attend','attendons','attendez','attendent'],
+  'Imparfait':['attendais','attendais','attendait','attendions','attendiez','attendaient'],
+  'Futur simple':['attendrai','attendras','attendra','attendrons','attendrez','attendront'],
+  'Conditionnel présent':['attendrais','attendrais','attendrait','attendrions','attendriez','attendraient'],
+ },
+ 'répondre':{
+  'Présent':['réponds','réponds','répond','répondons','répondez','répondent'],
+  'Imparfait':['répondais','répondais','répondait','répondions','répondiez','répondaient'],
+  'Futur simple':['répondrai','répondras','répondra','répondrons','répondrez','répondront'],
+  'Conditionnel présent':['répondrais','répondrais','répondrait','répondrions','répondriez','répondraient'],
+ },
+ 'perdre':{
+  'Présent':['perds','perds','perd','perdons','perdez','perdent'],
+  'Imparfait':['perdais','perdais','perdait','perdions','perdiez','perdaient'],
+  'Futur simple':['perdrai','perdras','perdra','perdrons','perdrez','perdront'],
+  'Conditionnel présent':['perdrais','perdrais','perdrait','perdrions','perdriez','perdraient'],
+ },
+};
+const verbs=Object.keys(DATA);
+// Gibt eine Liste aller als richtig akzeptierten Formen zurück (oder null).
+function forms(v,t,i){
+ const x=DATA[v]&&DATA[v][t]?DATA[v][t][i]:null;
+ if(x==null)return null;
+ return Array.isArray(x)?x:[x];
+}
+const $=id=>document.getElementById(id);
+let selected=[],current=null,attempt=0,completed=[],seen=[];
+function normalize(s){return s.trim().replace(/\s+/g,' ').toLocaleLowerCase('fr-FR').normalize('NFC').replace(/[’‘`´]/g,"'").replace(/'\s+/g,"'");}
+function isReflexive(v){return /^s'|^se /.test(v);}
+function buildPool(){
+ const pool=[];
+ for(const t of selected)for(const v of verbs)for(let i=0;i<6;i++){
+  const answers=forms(v,t,i);if(answers)pool.push({t,v,i,answers,answer:answers[0]});
+ }
+ return pool;
+}
+let pool=[];
+function nextQuestion(){
+ let choices=pool.filter(x=>!seen.slice(-3).some(y=>y.t===x.t&&y.v===x.v&&y.i===x.i));
+ if(!choices.length)choices=pool;
+ current=choices[Math.floor(Math.random()*choices.length)];
+ attempt=0;seen.push(current);
+ $('tense').textContent=current.t;$('verb').textContent=current.v;$('person').textContent=pronoun(current);
+ $('entry').value='';$('entry').disabled=false;$('check').classList.remove('hidden');$('check').disabled=false;
+ $('next').classList.add('hidden');$('feedback').textContent='';
+ $('reflNote').classList.toggle('hidden',!isReflexive(current.v));
+ $('number').textContent='Aufgabe '+(completed.length+1);
+ $('score').textContent=completed.filter(x=>x.result!=='falsch').length+' richtig';
+ $('entry').focus();
+}
+function splitExpected(expected,t,i){
+ const ending=t==='Futur simple'?FUT[i]:t==='Imparfait'||t==='Conditionnel présent'?IMP[i]:null;
+ if(!ending||!expected.endsWith(ending))return null;
+ return {stem:expected.slice(0,-ending.length),ending};
+}
+function hint(input){
+ if(isReflexive(current.v)){
+  const r=normalize(current.answer).match(/^(m'|t'|s'|me |te |se |nous |vous )/);
+  if(r&&!input.startsWith(r[1])&&!input.startsWith(normalize(P[current.i])+' '+r[1]))return 'Denk an das Reflexivpronomen (me/m\', te/t\', se/s\', nous, vous)!';
+ }
+ if(current.t==='Présent')return 'Die Form stimmt noch nicht. Überprüfe die Schreibweise und die vollständige Präsensform.';
+ const parts=splitExpected(current.answer,current.t,current.i);
+ if(!parts)return 'Die Form stimmt noch nicht. Überprüfe die vollständige Verbform.';
+ const stemOK=input.startsWith(parts.stem),endingOK=input.endsWith(parts.ending);
+ if(stemOK&&endingOK)return 'Die Form stimmt noch nicht. Überprüfe die Schreibweise noch einmal.';
+ if(stemOK)return 'Dein Verbstamm ist richtig, aber die Endung stimmt noch nicht.';
+ if(endingOK)return 'Deine Endung ist richtig, aber dein Verbstamm stimmt noch nicht.';
+ return 'Verbstamm und Endung stimmen noch nicht. Überprüfe beide Bestandteile.';
+}
+function pronoun(c){
+ if(c.i===0&&/^[aeiouhéèêàâîôûœ]/i.test(c.answers[0]))return "j'";
+ return P[c.i];
+}
+function stripPronoun(val){
+ // Falls das passende Personalpronomen mit eingegeben wurde, wird es entfernt.
+ const pr=normalize(pronoun(current));
+ if(pr==="j'"&&val.startsWith("j'"))return val.slice(2).trim();
+ if(val.startsWith(pr+' '))return val.slice(pr.length).trim();
+ return val;
+}
+function check(){
+ const raw=normalize($('entry').value);
+ const val=stripPronoun(raw);
+ if(!val){$('feedback').textContent='Bitte gib eine Verbform ein.';return;}
+ // Akzeptiert wird die Eingabe mit oder ohne Personalpronomen.
+ // Wichtig für "nous nous ennuyons" (mit) und "nous ennuyons" (ohne).
+ if(current.answers.some(a=>val===normalize(a)||raw===normalize(a))){
+  completed.push({...current,result:attempt===0?'erstversuch':'zweiterVersuch'});
+  $('feedback').innerHTML='<span class="good">✓ Richtig!</span><hr>';
+  $('entry').disabled=true;$('check').classList.add('hidden');$('next').classList.remove('hidden');
+  $('score').textContent=completed.filter(x=>x.result!=='falsch').length+' richtig';
+ }else{
+  attempt++;
+  if(attempt===1){
+   $('feedback').innerHTML='<span class="bad">Noch nicht richtig.</span><p>'+hint(val)+'</p><p class="muted">Du hast einen zweiten Versuch.</p>';
+   $('entry').value='';$('entry').focus();
+  }else{
+   completed.push({...current,result:'falsch'});
+   $('feedback').innerHTML='<span class="bad">Noch nicht richtig.</span><p>Die richtige Form lautet: <strong>'+current.answer+'</strong>.</p><hr><p class="muted">Diese Form solltest du noch einmal üben.</p>';
+   $('entry').disabled=true;$('check').classList.add('hidden');$('next').classList.remove('hidden');
+  }
+ }
+}
+function start(){
+ selected=[...document.querySelectorAll('#choices input:checked')].map(x=>x.value);
+ if(!selected.length){$('setupError').textContent='Bitte wähle mindestens eine Zeitform.';return;}
+ pool=buildPool();completed=[];seen=[];
+ $('setup').classList.add('hidden');$('result').classList.add('hidden');$('game').classList.remove('hidden');$('state').textContent='Training läuft';nextQuestion();
+}
+function bilan(){
+ $('game').classList.add('hidden');$('result').classList.remove('hidden');$('state').textContent='Bilan';
+ $('total').textContent=completed.length;
+ $('first').textContent=completed.filter(x=>x.result==='erstversuch').length;
+ $('second').textContent=completed.filter(x=>x.result==='zweiterVersuch').length;
+ $('wrong').textContent=completed.filter(x=>x.result==='falsch').length;
+ $('byTense').innerHTML=selected.map(t=>{
+  const a=completed.filter(x=>x.t===t);
+  return '<p>'+t+': <strong>'+a.filter(x=>x.result!=='falsch').length+' von '+a.length+'</strong> Aufgaben richtig abgeschlossen</p>';
+ }).join('');
+ const weak=[...new Set(completed.filter(x=>x.result!=='erstversuch').map(x=>x.v+' ('+x.t+')'))];
+ $('review').textContent=weak.length?weak.join(', '):'Keine Formen zum Wiederholen aus dieser Runde.';
+}
+$('start').addEventListener('click',start);$('check').addEventListener('click',check);
+document.addEventListener('keydown',e=>{
+ if(e.key!=='Enter'||e.repeat||$('game').classList.contains('hidden'))return;
+ e.preventDefault();
+ if(!$('check').classList.contains('hidden'))check();
+ else if(!$('next').classList.contains('hidden'))nextQuestion();
+});
+$('next').addEventListener('click',nextQuestion);$('finish').addEventListener('click',bilan);
+$('again').addEventListener('click',()=>{completed=[];seen=[];$('result').classList.add('hidden');$('game').classList.remove('hidden');$('state').textContent='Training läuft';nextQuestion();});
+$('back').addEventListener('click',()=>{$('result').classList.add('hidden');$('setup').classList.remove('hidden');$('state').textContent='Start';});
+document.querySelectorAll('#accents button').forEach(b=>b.addEventListener('click',()=>{
+ const el=$('entry');if(el.disabled)return;
+ const s=el.selectionStart??el.value.length,e=el.selectionEnd??el.value.length;
+ el.value=el.value.slice(0,s)+b.textContent+el.value.slice(e);
+ el.focus();el.setSelectionRange(s+1,s+1);
+}));
+
+</script>
+</body></html>
